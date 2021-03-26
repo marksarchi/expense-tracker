@@ -15,7 +15,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sarchimark/expense-tracker/app/handlers"
 	"github.com/sarchimark/expense-tracker/foundation/database"
-	//"github.com/sarchimark/expense-tracker/foundation/database"
 )
 
 func main() {
@@ -23,39 +22,6 @@ func main() {
 	log := log.New(os.Stdout, "Expense-Tracker", log.Ldate|log.Ltime|log.Lshortfile)
 
 	//Start expense-tracker app
-
-	//Channel to listen for an interrupt or terminate signal from the os.
-	//shutdown := make(chan os.Signal, 1)
-	//signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
-
-	//Using database/sql
-
-	// psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+
-	// 	"password=%s dbname=%s sslmode=disable",
-	// 	"localhost", 5432, "postgres", "password", "expensetrackerdb")
-
-	// db, err := sql.Open("postgres", psqlInfo)
-	// if err != nil {
-	// 	panic(err)
-	// }
-	// defer db.Close()
-	// err = db.Ping()
-	// if err != nil {
-	// 	log.Print(err)
-	// 	panic(err)
-	// }
-	// log.Println("Initialised db")
-
-	//Using sqlx
-
-	// err = database.StatusCheck(context.Background(), db1)
-	// if err != nil {
-	// 	log.Print(err)
-	// }
-	// err = database.Check(context.Background(), db1)
-	// if err != nil {
-	// 	log.Print(err)
-	// }
 
 	if err := Run(log); err != nil {
 		log.Println("main: error:", err)
@@ -65,15 +31,6 @@ func main() {
 }
 
 func Run(log *log.Logger) error {
-
-	// db, err := database.OpenDb()
-	// if err != nil {
-	// 	panic(err)
-	// }
-
-	// defer db.Close()
-
-	//database.Pingdb(db)
 
 	dbConfig := database.Config{
 		User:       "postgres",

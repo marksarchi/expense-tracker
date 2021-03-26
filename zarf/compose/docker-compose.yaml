@@ -1,0 +1,21 @@
+version : "3.8"
+networks:
+  tracker.network: 
+    driver: bridge
+services:
+  expense-tracker:
+         container_name: expense-tracker
+         image: expensetracker-1.0
+         restart: always
+         ports :
+            - "8000:8000" 
+         networks:
+          - tracker.network   
+  db:
+    container_name: tracker_db
+    networks:
+      - tracker.network
+    image: postgres:latest
+    ports:
+      - 5432:5432           
+                 

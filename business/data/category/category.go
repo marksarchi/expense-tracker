@@ -9,6 +9,9 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
+
+	//uuid "github.com/satori/go.uuid"
+	"github.com/google/uuid"
 )
 
 var (
@@ -37,7 +40,7 @@ func New(log *log.Logger, db *sqlx.DB) Category {
 }
 
 //Create adds a new Category
-func (cg Category) Create(newCategory NewCategory, userID int) (CategoryInfo, error) {
+func (cg Category) Create(newCategory NewCategory, userID string) (CategoryInfo, error) {
 	q := "INSERT INTO ET_CATEGORIES ( CATEGORY_ID, USER_ID, TITLE, DESCRIPTION) VALUES(NEXTVAL('ET_CATEGORIES_SEQ'), $1, $2, $3)"
 
 	cat := CategoryInfo{
@@ -58,9 +61,12 @@ func (cg Category) Create(newCategory NewCategory, userID int) (CategoryInfo, er
 }
 
 //GetAllCategories Returns all categories with specified userID
-func (cg Category) GetAllCategories(userID int) ([]CategoryInfo, error) {
+func (cg Category) GetAllCategories(userID string) ([]CategoryInfo, error) {
+	if _, err := uuid.Parse(userID); err != nil {
+		return []CategoryInfo{}, ErrInvalidID
+	}
 
-	q := `
+	const q = `
 	SELECT 
 	    c.* ,
 	    COALESCE(SUM(t.amount),0) AS total_expense 
@@ -69,7 +75,7 @@ func (cg Category) GetAllCategories(userID int) ([]CategoryInfo, error) {
 	RIGHT OUTER JOIN 
 	    et_transactions AS t ON c.category_id = t.category_id
 	WHERE 
-	    c.user_id =$1
+	    c.user_id = $1
 	GROUP BY c.category_id`
 
 	categories := []CategoryInfo{}
@@ -81,7 +87,7 @@ func (cg Category) GetAllCategories(userID int) ([]CategoryInfo, error) {
 }
 
 //GetCategoryByID Returns all categories with specified userID and categoryID
-func (cg Category) GetCategoryByID(userID, categoryID int) (CategoryInfo, error) {
+func (cg Category) GetCategoryByID(userID string, categoryID int) (CategoryInfo, error) {
 
 	q := `
 	SELECT 
@@ -92,10 +98,14 @@ func (cg Category) GetCategoryByID(userID, categoryID int) (CategoryInfo, error)
 	RIGHT OUTER JOIN 
 	    et_transactions AS t ON c.category_id = t.category_id
 	WHERE  
-	    c.user_id =$1 AND c.category_id = $2 
+	    c.user_id = $1 AND c.category_id = $2 
 	GROUP BY c.category_id`
 
 	var ci CategoryInfo
+
+	if _, err := uuid.Parse(userID); err != nil {
+		return CategoryInfo{}, ErrInvalidID
+	}
 
 	if err := cg.db.Get(&ci, q, userID, categoryID); err != nil {
 		if err == sql.ErrNoRows {
@@ -110,7 +120,7 @@ func (cg Category) GetCategoryByID(userID, categoryID int) (CategoryInfo, error)
 }
 
 //DeleteCategory deletes a category
-func (cg Category) DeleteCategory(userID, categoryID int) error {
+func (cg Category) DeleteCategory(userID string, categoryID int) error {
 	q := `DELETE FROM ET_CATEGORIES WHERE USER_ID = $1 AND CATEGORY_ID = $2`
 
 	_, err := cg.db.Exec(q, userID, categoryID)
@@ -121,7 +131,7 @@ func (cg Category) DeleteCategory(userID, categoryID int) error {
 }
 
 //UpdateCategory update a single category
-func (cg Category) UpdateCategory(userID int, categoryID int, uc UpdateCategory) error {
+func (cg Category) UpdateCategory(userID string, categoryID int, uc UpdateCategory) error {
 	q := `UPDATE ET_CATEGORIES SET TITLE = $1, DESCRIPTION = $2 " +
 	"WHERE USER_ID = $3 AND CATEGORY_ID = $4`
 

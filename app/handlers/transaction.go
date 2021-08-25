@@ -24,7 +24,7 @@ func (tg transactionGroup) addTransaction(w http.ResponseWriter, r *http.Request
 
 	categoryId := web.GetURLParamInt64(w, r, "categoryId")
 
-	userID := tg.userID(r)
+	userID, _ := tg.usrID(r)
 
 	transaction, err := tg.transaction.AddTransaction(nt, userID, int(categoryId))
 
@@ -36,7 +36,7 @@ func (tg transactionGroup) addTransaction(w http.ResponseWriter, r *http.Request
 }
 func (tg transactionGroup) getTransactionById(w http.ResponseWriter, r *http.Request) error {
 
-	userId := tg.userID(r)
+	userId, _ := tg.usrID(r)
 	categoryID := int(web.GetURLParamInt64(w, r, "categoryId"))
 	transactionID := int(web.GetURLParamInt64(w, r, "transactionId"))
 
@@ -57,7 +57,7 @@ func (tg transactionGroup) getTransactionById(w http.ResponseWriter, r *http.Req
 }
 
 func (tg transactionGroup) getAllTransactions(w http.ResponseWriter, r *http.Request) error {
-	userID := tg.userID(r)
+	userID, _ := tg.usrID(r)
 	categoryID := web.GetURLParamInt64(w, r, "categoryId")
 
 	categories, err := tg.transaction.GetAllTransactions(userID, int(categoryID))
@@ -68,7 +68,7 @@ func (tg transactionGroup) getAllTransactions(w http.ResponseWriter, r *http.Req
 
 }
 func (tg transactionGroup) updateTransaction(w http.ResponseWriter, r *http.Request) error {
-	userID := tg.userID(r)
+	userID, _ := tg.usrID(r)
 	categoryID := web.GetURLParamInt64(w, r, "categoryId")
 	transactionID := web.GetURLParamInt64(w, r, "transactionId")
 	var transUp transaction.UpdateTransaction
@@ -93,7 +93,7 @@ func (tg transactionGroup) updateTransaction(w http.ResponseWriter, r *http.Requ
 }
 
 func (tg transactionGroup) removeTransaction(w http.ResponseWriter, r *http.Request) error {
-	userID := tg.userID(r)
+	userID, _ := tg.usrID(r)
 	categoryID := web.GetURLParamInt64(w, r, "categoryId")
 	transactionID := web.GetURLParamInt64(w, r, "transactionId")
 
@@ -116,4 +116,12 @@ func (tg transactionGroup) userID(r *http.Request) int {
 		errors.Wrap(err, "converting claims string to id")
 	}
 	return userID
+}
+func (tg transactionGroup) usrID(r *http.Request) (string, error) {
+	claims, ok := r.Context().Value(auth.Key).(auth.Claims)
+	if !ok {
+		return "", web.NewShutdownError("web value missing from context")
+	}
+	return claims.Subject, nil
+
 }

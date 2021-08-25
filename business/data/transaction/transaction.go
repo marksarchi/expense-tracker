@@ -36,7 +36,7 @@ func New(log *log.Logger, db *sqlx.DB) Transaction {
 }
 
 //AddTransaction creates a new transaction
-func (t Transaction) AddTransaction(nt NewTransaction, userID int, CategoryID int) (Info, error) {
+func (t Transaction) AddTransaction(nt NewTransaction, userID string, CategoryID int) (Info, error) {
 	q := `INSERT INTO ET_TRANSACTIONS (TRANSACTION_ID, CATEGORY_ID, USER_ID, AMOUNT, NOTE, TRANSACTION_DATE) 
 	VALUES(NEXTVAL('ET_TRANSACTIONS_SEQ'), $1, $2, $3, $4, $5)`
 
@@ -58,7 +58,7 @@ func (t Transaction) AddTransaction(nt NewTransaction, userID int, CategoryID in
 }
 
 //GetTransactionByID finds a single transaction identified by given userId, categoryId and transactionId
-func (t Transaction) GetTransactionByID(userID, categoryID, transactionID int) (Info, error) {
+func (t Transaction) GetTransactionByID(userID string, categoryID, transactionID int) (Info, error) {
 
 	q := `SELECT TRANSACTION_ID, CATEGORY_ID, USER_ID, AMOUNT, NOTE, TRANSACTION_DATE FROM ET_TRANSACTIONS 
 	WHERE USER_ID = $1 AND CATEGORY_ID  = $2 AND TRANSACTION_ID = $3`
@@ -76,7 +76,7 @@ func (t Transaction) GetTransactionByID(userID, categoryID, transactionID int) (
 }
 
 //GetAllTransactions finds transactions identified by given userId and categoryId
-func (t Transaction) GetAllTransactions(userID, categoryID int) ([]Info, error) {
+func (t Transaction) GetAllTransactions(userID string, categoryID int) ([]Info, error) {
 	q := `SELECT TRANSACTION_ID, CATEGORY_ID, USER_ID, AMOUNT, NOTE, TRANSACTION_DATE FROM ET_TRANSACTIONS
 	 WHERE USER_ID = $1 AND CATEGORY_ID =$2`
 
@@ -89,7 +89,7 @@ func (t Transaction) GetAllTransactions(userID, categoryID int) ([]Info, error) 
 }
 
 //UpdateTransaction updates a single transaction
-func (t Transaction) UpdateTransaction(userID, categoryID, transactionID int, ut UpdateTransaction) error {
+func (t Transaction) UpdateTransaction(userID string, categoryID, transactionID int, ut UpdateTransaction) error {
 	q := `UPDATE ET_TRANSACTIONS SET  AMOUNT = $4, NOTE = $5" +
 "WHERE USER_ID = $1 AND CATEGORY_ID = $2 AND TRANSACTION_ID = $3"`
 	trans, err := t.GetTransactionByID(userID, categoryID, transactionID)
@@ -115,7 +115,7 @@ func (t Transaction) UpdateTransaction(userID, categoryID, transactionID int, ut
 }
 
 //RemoveTransactionByID  deletes a single transaction
-func (t Transaction) RemoveTransactionByID(userID, categoryID, transactionID int) error {
+func (t Transaction) RemoveTransactionByID(userID string, categoryID, transactionID int) error {
 	q := `DELETE FROM ET_TRANSACTIONS WHERE USER_ID = $1 AND CATEGORY_ID = $2 AND TRANSACTION_ID = $3`
 	t.log.Printf("%s: %s", "transaction.Delete",
 		database.Log(q, transactionID),

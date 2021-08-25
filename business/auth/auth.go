@@ -8,8 +8,6 @@ import (
 	"strings"
 	"sync"
 
-	//"time"
-
 	"github.com/dgrijalva/jwt-go"
 	"github.com/pkg/errors"
 )
@@ -57,47 +55,18 @@ func New(algorithm string) (*Auth, error) {
 	return &a, nil
 }
 
-// GenerateToken generates a signed JWT token string representing the user Claims.
-func (a *Auth) GenerateToken(claims Claims) (string, error) {
-	token := jwt.NewWithClaims(a.method, claims)
-	var privateKey = "MIIEpQIBAAKCAQEAvMAHb0IoLvoYuW2kA+LTmnk+hfnBq1eYIh4CT/rMPCxgtzjq"
-	// token.Header["kid"] = kid
+func (a *Auth) GenerateToken(claims jwt.Claims) (string, error) {
+	var err error
+	//Creating Access Token
+	os.Setenv("ACCESS_SECRET", "jdnfksdmfksd") //this should be in an env file
 
-	// var privateKey *rsa.PrivateKey
-	// a.mu.RLock()
-	// {
-	// 	var ok bool
-	// 	privateKey, ok = a.keys[kid]
-	// 	if !ok {
-	// 		return "", errors.New("kid lookup failed")
-	// 	}
-	// }
-	// a.mu.RUnlock()
-
-	str, err := token.SignedString(privateKey)
+	at := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	token, err := at.SignedString([]byte(os.Getenv("ACCESS_SECRET")))
 	if err != nil {
-		return "", errors.Wrap(err, "signing token")
+		return "", err
 	}
-
-	return str, nil
+	return token, nil
 }
-
-// ValidateToken recreates the Claims that were used to generate a token. It
-// verifies that the token was signed using our key.
-// func (a *Auth) ValidateToken(tokenStr string) (Claims, error) {
-
-// 	var claims Claims
-// 	token, err := a.parser.ParseWithClaims(tokenStr, &claims, a.keyFunc)
-// 	if err != nil {
-// 		return Claims{}, errors.Wrap(err, "parsing token")
-// 	}
-
-// 	if !token.Valid {
-// 		return Claims{}, errors.New("invalid token")
-// 	}
-
-// 	return claims, nil
-// }
 
 func CreateToken(claims jwt.Claims) (string, error) {
 	var err error
@@ -139,17 +108,26 @@ func VerifyToken(r *http.Request) (jwt.Claims, error) {
 	}
 	return token.Claims, nil
 }
-func (a *Auth) ValidateToken(tokenStr string) (jwt.Claims, error) {
 
-	token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
+func (a *Auth) ValidateTkn(tokenStr string) (Claims, error) {
+	var claims Claims
+	keyFunc := func(token *jwt.Token) (interface{}, error) {
 		//Make sure that the token method conform to "SigningMethodHMAC"
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
 		return []byte(os.Getenv("ACCESS_SECRET")), nil
-	})
-	if err != nil {
-		return nil, err
 	}
-	return token.Claims, nil
+
+	token, err := a.parser.ParseWithClaims(tokenStr, &claims, keyFunc)
+
+	if err != nil {
+		return Claims{}, errors.Wrap(err, "parsing token")
+	}
+
+	if !token.Valid {
+		return Claims{}, errors.Wrap(err, "invalid token")
+	}
+
+	return claims, nil
 }

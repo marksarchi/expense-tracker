@@ -25,10 +25,10 @@ func (ug *UserGroup) createUser(w http.ResponseWriter, r *http.Request) error {
 
 	user, err := ug.user.CreateUser(newUser)
 	if err != nil {
-		errors.Wrapf(err, "creating new user : %+v", newUser)
+		errors.Wrapf(err, "creating new user : %+v", &user)
 
 	}
-	log.Println(user)
+	log.Println(&user)
 	return web.Respond(w, user, http.StatusCreated)
 
 }
@@ -62,4 +62,22 @@ func (ug *UserGroup) Login(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	return web.Respond(w, tk, http.StatusOK)
+}
+func (ug UserGroup) queryByID(w http.ResponseWriter, r *http.Request) error {
+	usr, err := ug.user.QueryByID()
+
+	if err != nil {
+		switch err {
+		case user.ErrInvalidID:
+			return web.NewRequestError(err, http.StatusBadRequest)
+		case user.ErrNotFound:
+			return web.NewRequestError(err, http.StatusNotFound)
+		case user.ErrForbidden:
+			return web.NewRequestError(err, http.StatusForbidden)
+		default:
+			return errors.Wrapf(err, "ID: %s", "3d266f28-5d49-4702-9528-9b266afc618a")
+		}
+
+	}
+	return web.Respond(w, usr, http.StatusOK)
 }

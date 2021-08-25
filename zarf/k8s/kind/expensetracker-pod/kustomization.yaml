@@ -1,0 +1,11 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- ./kind-expensetracker-config.yaml
+- ../../base/expensetracker-pod/
+patchesStrategicMerge:
+- ./kind-expensetracker-patch.yaml
+images:
+- name: expensetracker-api-image
+  newName: 36044735/expensetracker
+  newTag: v1.1.0

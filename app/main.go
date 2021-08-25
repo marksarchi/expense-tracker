@@ -32,14 +32,21 @@ func main() {
 
 func Run(log *log.Logger) error {
 
+	// dbConfig := database.Config{
+	// 	User:       "postgres",
+	// 	Password:   "postgres",
+	// 	Host:       "localhost:5432",
+	// 	Name:       "expensetrackerdb",
+	// 	DisableTLS: true,
+	// }
 	dbConfig := database.Config{
 		User:       "postgres",
 		Password:   "postgres",
-		Host:       "tracker_db:5432",
-		Name:       "expensetrackerdb",
+		Host:       "db",
+		Name:       "postgres",
 		DisableTLS: true,
 	}
-	db1, err := database.Open(dbConfig)
+	db, err := database.Open(dbConfig)
 
 	if err != nil {
 		log.Print(err)
@@ -50,7 +57,7 @@ func Run(log *log.Logger) error {
 
 	srv := http.Server{
 		Addr:    ":8000",
-		Handler: handlers.SetupRoutes(db1, log, shutdown),
+		Handler: handlers.SetupRoutes(db, log, shutdown),
 	}
 
 	serverErrors := make(chan error, 1)

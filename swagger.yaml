@@ -1,0 +1,32 @@
+definitions:
+  CategoryInfo:
+    properties:
+      Description:
+        type: string
+      ID:
+        format: int64
+        type: integer
+      Title:
+        type: string
+      UserId:
+        format: int64
+        type: integer
+    type: object
+    x-go-package: github.com/sarchimark/expense-tracker/business/data/category
+info: {}
+paths:
+  /api/categories:
+    post:
+      description: creates a new category
+      operationId: createCategory
+      responses:
+        "201":
+          $ref: '#/responses/categoryResponse'
+      tags:
+      - category
+responses:
+  categoryResponse:
+    description: Information about a category
+    schema:
+      $ref: '#/definitions/CategoryInfo'
+swagger: "2.0"

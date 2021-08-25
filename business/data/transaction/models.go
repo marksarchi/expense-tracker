@@ -6,7 +6,7 @@ import "time"
 type Info struct {
 	TransactionID   int     `db:"transaction_id" json:"transaction_id"`
 	CategoryID      int     `db:"category_id" json:"category_id"`
-	UserID          int     `db:"user_id" json:"user_id"`
+	UserID          string  `db:"user_id" json:"user_id"`
 	Amount          float64 `db:"amount" json:"amount"`
 	Note            string  `db:"note" json:"note"`
 	TransactionDate int     `db:"transaction_date" json:"transaction_date"`

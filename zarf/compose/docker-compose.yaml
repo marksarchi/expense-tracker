@@ -4,15 +4,15 @@ networks:
     driver: bridge
 services:
   expense-tracker:
-         container_name: expense-tracker
-         image: expensetracker-1.0
+         container_name: expensetracker-api
+         image: expensetracker:v1.0.0
          restart: always
          ports :
             - "8000:8000" 
          networks:
           - tracker.network   
   db:
-    container_name: tracker_db
+    container_name: tracker-db
     networks:
       - tracker.network
     image: postgres:latest

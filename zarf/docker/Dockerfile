@@ -1,18 +1,18 @@
-FROM golang:1.15.6 as builder
+FROM golang:latest as builder
 
 ENV CGO_ENABLED 0
 
-RUN mkdir -p /expense-tracker
+# RUN mkdir /expense-tracker
 
-COPY go.* /expense-tracker/
-WORKDIR /expense-tracker
+# COPY go.* /expense-tracker/
+# WORKDIR /expense-tracker
+# RUN go mod download
 
 
-RUN go mod download
 
-WORKDIR /expense-tracker
-
-COPY . .
+COPY . /expense-tracker
+WORKDIR /expense-tracker/app-admin
+RUN go build
 
 WORKDIR /expense-tracker/app
 
@@ -23,6 +23,7 @@ RUN go build
 FROM alpine:latest AS production
 
 COPY  --from=builder /expense-tracker/app/app /expense-tracker/app
+COPY  --from=builder /expense-tracker/app-admin /expense-tracker/admin
 WORKDIR /expense-tracker
 CMD ["./app"]
 

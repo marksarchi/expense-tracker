@@ -10,6 +10,9 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
 
+	//uuid "github.com/satori/go.uuid"
+	"github.com/google/uuid"
+
 	//"github.com/dgrijalva/jwt-go"
 	"github.com/sarchimark/expense-tracker/business/auth"
 	"golang.org/x/crypto/bcrypt"
@@ -46,7 +49,7 @@ func New(log *log.Logger, db *sqlx.DB) User {
 
 //CreateUser creates a new user
 func (u User) CreateUser(newUser NewUser) (Info, error) {
-	q := "INSERT INTO ET_USERS (USER_ID ,FIRST_NAME, LAST_NAME,EMAIL , PASSWORD) VALUES(NEXTVAL('ET_USERS_SEQ'),$1 ,$2 ,$3, $4)"
+	q := "INSERT INTO ET_USERS (USER_ID ,FIRST_NAME, LAST_NAME,EMAIL , PASSWORD) VALUES($1 ,$2 ,$3, $4,$5)"
 
 	hash, err := bcrypt.GenerateFromPassword([]byte(newUser.Password), 12)
 	if err != nil {
@@ -54,6 +57,7 @@ func (u User) CreateUser(newUser NewUser) (Info, error) {
 	}
 
 	userInfo := Info{
+		ID:           uuid.New().String(),
 		FirstName:    newUser.FirstName,
 		SecondName:   newUser.SecondName,
 		Email:        newUser.Email,
@@ -61,7 +65,7 @@ func (u User) CreateUser(newUser NewUser) (Info, error) {
 	}
 	log.Printf("User : %s", userInfo)
 
-	_, err = u.db.Exec(q, userInfo.FirstName, userInfo.SecondName, userInfo.Email, userInfo.PasswordHash)
+	_, err = u.db.Exec(q, userInfo.ID, userInfo.FirstName, userInfo.SecondName, userInfo.Email, userInfo.PasswordHash)
 	if err != nil {
 		return Info{}, errors.Wrapf(err, "Inserting NewUser")
 	}
@@ -71,7 +75,7 @@ func (u User) CreateUser(newUser NewUser) (Info, error) {
 }
 
 //Authenticates users
-func (u User) Authenticate(email, password string) (jwt.Claims, error) {
+func (u User) Authenticate(email, password string) (auth.Claims, error) {
 
 	q := "SELECT * FROM et_users WHERE email =  $1"
 
@@ -88,20 +92,40 @@ func (u User) Authenticate(email, password string) (jwt.Claims, error) {
 	if err := bcrypt.CompareHashAndPassword(usr.PasswordHash, []byte(password)); err != nil {
 		return auth.Claims{}, ErrAuthenticationFailure
 	}
-	// claims := auth.Claims{
-	// 	StandardClaims: jwt.StandardClaims{
-	// 		Issuer:    "Expense tracker project",
-	// 		Subject:   usr.ID,
-	// 		Audience:  "students",
-	// 		ExpiresAt: time.Now().Add(time.Hour).Unix(),
-	// 		IssuedAt:  time.Now().Unix(),
-	// 	},
-	// }
-	atClaims := jwt.MapClaims{}
-	atClaims["authorized"] = true
-	atClaims["user_id"] = usr.ID
-	atClaims["exp"] = time.Now().Add(time.Minute * 30).Unix()
+	claims := auth.Claims{
+		StandardClaims: jwt.StandardClaims{
+			Issuer:    "Expense tracker project",
+			Subject:   usr.ID,
+			Audience:  "students",
+			ExpiresAt: time.Now().Add(time.Hour).Unix(),
+			IssuedAt:  time.Now().Unix(),
+		},
+	}
+	// atClaims := jwt.MapClaims{}
+	// atClaims["authorized"] = true
+	// atClaims["user_id"] = usr.ID
+	// atClaims["exp"] = time.Now().Add(time.Hour).Unix()
 
-	return atClaims, nil
+	return claims, nil
 
+}
+
+func (u User) QueryByID() (Info, error) {
+	userID := "3d266f28-5d49-4702-9528-9b266afc618a"
+	const q = `
+	SELECT
+		*
+	FROM
+		et_users
+	WHERE 
+		user_id = $1`
+
+	var userInfo Info
+	if err := u.db.Get(&userInfo, q, userID); err != nil {
+		if err == sql.ErrNoRows {
+			return Info{}, ErrNotFound
+		}
+		return Info{}, errors.Wrapf(err, "selecting user %q", userID)
+	}
+	return userInfo, nil
 }
